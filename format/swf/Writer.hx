@@ -1234,6 +1234,49 @@ class Writer {
 		}
 	}
 
+	function writeDefineText( dt : DefineText, v2 : Bool ) {
+		o.writeUInt16(dt.cid);
+		writeRect(dt.textBounds);
+		writeMatrix(dt.textMatrix);
+		o.writeByte(dt.glyphBits);
+		o.writeByte(dt.advanceBits);
+		for ( tr in dt.textRecords ) {
+			bits.writeBit(true);
+			bits.writeBits(3, 0);
+			bits.writeBit(tr.fontId != null );
+			bits.writeBit(tr.textColor != null);
+			bits.writeBit(tr.yOffset != null);
+			bits.writeBit(tr.xOffset != null);
+			bits.flush();
+			if ( tr.fontId != null ) {
+				o.writeUInt16(tr.fontId);
+			}
+			if ( tr.textColor != null ) {
+				if ( v2 ) {
+					writeFixed(tr.textColor);
+				} else {
+					o.writeUInt24(#if haxe3 tr.textColor #else haxe.Int32.toInt(tr.textColor) #end);
+				}
+			}
+			if ( tr.xOffset != null ) {
+				o.writeInt16(tr.xOffset);
+			}
+			if ( tr.yOffset != null ) {
+				o.writeInt16(tr.yOffset);
+			}
+			if ( tr.textHeight != null ) {
+				o.writeUInt16(tr.textHeight);
+			}
+			o.writeByte(tr.glyphEntries.length);
+			for ( entry in tr.glyphEntries ) {
+				bits.writeBits(dt.glyphBits, entry.glyphIndex);
+				bits.writeBits(dt.advanceBits, entry.glyphAdvance);
+			}
+			bits.flush();
+		}
+		o.writeByte(0);
+	}
+	
 	public function writeTag( t : SWFTag ) {
 		switch( t ) {
 		case TUnknown(id,data):
@@ -1412,6 +1455,20 @@ class Writer {
 		case TSound(data):
 			writeSound(data);
 			
+		case TDefineText(dt):
+			var t = openTMP();
+			writeDefineText(dt, false);
+			var bytes = closeTMP(t);
+			writeTID(TagId.DefineText, bytes.length);
+			o.write(bytes);
+
+		case TDefineText2(dt):
+			var t = openTMP();
+			writeDefineText(dt, true);
+			var bytes = closeTMP(t);
+			writeTID(TagId.DefineText2, bytes.length);
+			o.write(bytes);
+
 		}
 		
 	}

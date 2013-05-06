@@ -1212,6 +1212,66 @@ class Reader {
 		});
 	}
 
+	function readTextRecord(glyphBits, advanceBits, v2) {
+		bits.reset();
+		if (bits.readBit()) {
+			bits.readBits(3); // Must 0;
+			var hasFont = bits.readBit();
+			var hasColor = bits.readBit();
+			var hasYOffset = bits.readBit();
+			var hasXOffset = bits.readBit();
+			var fontId = hasFont ? i.readUInt16() : null;
+			var textColor = hasColor ? v2 ? readFixed() : #if haxe3 i.readUInt24() #else haxe.Int32.ofInt(i.readUInt24()) #end : null;
+			var xOffset = hasXOffset ? i.readInt16() : null;
+			var yOffset = hasYOffset ? i.readInt16() : null;
+			var textHeight = hasFont ? i.readUInt16() : null;
+			var glyphCount = i.readByte();
+			var glyphEntries = [
+				for ( i in 0...glyphCount ) {
+					var glyphIndex = bits.readBits(glyphBits);
+					var glyphAdvance = bits.readBits(advanceBits);
+					{
+						glyphIndex : glyphIndex,
+						glyphAdvance : glyphAdvance,
+					}
+				}
+			];
+			return {
+				fontId : fontId,
+				textColor : textColor,
+				xOffset : xOffset,
+				yOffset : yOffset,
+				textHeight : textHeight,
+				glyphEntries : glyphEntries,
+			};
+		} else {
+			return null;
+		}
+	}
+	
+	function readDefineText( v2 : Bool ) {
+		var cid = i.readUInt16();
+		var textBounds = readRect();
+		var textMatrix = readMatrix();
+		var glyphBits = i.readByte();
+		var advanceBits = i.readByte();
+		var textRecords = [];
+		var textRecord = readTextRecord(glyphBits, advanceBits, v2);
+		while (textRecord != null)
+		{
+			textRecords.push(textRecord);
+			textRecord = readTextRecord(glyphBits, advanceBits, v2);
+		}
+		return {
+			cid : cid,
+			textBounds : textBounds,
+			textMatrix : textMatrix,
+			glyphBits : glyphBits,
+			advanceBits : advanceBits,
+			textRecords : textRecords,
+		}
+	}
+	
 	public function readTag() : SWFTag {
 		var h = i.readUInt16();
 		var id = h >> 6;
@@ -1343,6 +1403,10 @@ class Reader {
 			TBinaryData(id, i.read(len - 6));
 		case TagId.DefineSound:
 			readSound(len);
+		case TagId.DefineText:
+			TDefineText(readDefineText(false));
+		case TagId.DefineText2:
+			TDefineText2(readDefineText(true));
 		default:
 			var data = i.read(len);
 			TUnknown(id,data);
