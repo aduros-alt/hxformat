@@ -64,6 +64,7 @@ enum SWFTag {
 	TSound( data : Sound );
 	TDefineText( dt : DefineText );
 	TDefineText2( dt : DefineText );
+	TDefineEditText( dt : DefineEditText );
 	TUnknown( id : Int, data : haxe.io.Bytes );
 }
 
@@ -499,6 +500,45 @@ typedef TextRecord = {
 	}>;
 };
 
+
+enum DefineEditTextAlign {
+	ALeft;
+	ARight;
+	ACenter;
+	AJustify;
+}
+
+typedef DefineEditText = {
+	var cid : Int;
+	var bounds : {
+		var left : Int;
+		var right : Int;
+		var top : Int;
+		var bottom : Int;
+	};
+	var wordWrap : Bool;
+	var multiline : Bool;
+	var password : Bool;
+	var readOnly : Bool;
+	var autoSize : Bool;
+	var noSelect : Bool;
+	var border : Bool;
+	var wasStatic : Bool;
+	var html : Bool;
+	var useOutlines : Bool;
+	var fontId : Null<Int>;
+	var fontClass : Null<String>;
+	var fontHeight : Null<Int>;
+	var textColor : Null<RGBA>;
+	var maxLength : Null<Int>;
+	var align : Null<DefineEditTextAlign>;
+	var leftMargin : Null<Int>;
+	var rightMargin : Null<Int>;
+	var indent : Null<Int>;
+	var leading : Null<Int>;
+	var variableName : String;
+	var initialText : Null<String>;
+};
 enum FontInfoData {
 	FIDFont1(shiftJIS: Bool, isANSI: Bool, hasWideCodes: Bool, data: FIData);
 	FIDFont2(language: LangCode, data: FIData);

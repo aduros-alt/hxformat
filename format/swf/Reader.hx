@@ -987,6 +987,68 @@ class Reader {
 		});
 	}
 
+	static var ALIGN_ENUMS(default, never) = Type.allEnums(DefineEditTextAlign);
+	
+	function readDefineEditText() {
+		var cid = i.readUInt16();
+		var bounds = readRect();
+		bits.reset();
+		var hasText = bits.readBit();
+		var wordWrap = bits.readBit();
+		var multiline = bits.readBit();
+		var password = bits.readBit();
+		var readOnly = bits.readBit();
+		var hasTextColor = bits.readBit();
+		var hasMaxLength = bits.readBit();
+		var hasFont = bits.readBit();
+		var hasFontClass = bits.readBit();
+		var autoSize = bits.readBit();
+		var hasLayout = bits.readBit();
+		var noSelect = bits.readBit();
+		var border = bits.readBit();
+		var wasStatic = bits.readBit();
+		var html = bits.readBit();
+		var useOutlines = bits.readBit();
+		var fontId = hasFont ? i.readUInt16() : null;
+		var fontClass = hasFontClass ? readUTF8Bytes().toString() : null;
+		var fontHeight = hasFont ? i.readUInt16() : null;
+		var textColor = hasTextColor ? readRGBA() : null;
+		var maxLength = hasMaxLength ? i.readUInt16() : null;
+		var align = hasLayout ? ALIGN_ENUMS[i.readByte()] : null;
+		var leftMargin = hasLayout ? i.readUInt16() : null;
+		var rightMargin = hasLayout ? i.readUInt16() : null;
+		var indent = hasLayout ? i.readUInt16() : null;
+		var leading = hasLayout ? i.readInt16() : null;
+		var variableName = readUTF8Bytes().toString();
+		var initialText = hasText ? readUTF8Bytes().toString() : null;
+		return {
+			cid : cid,
+			bounds : bounds,
+			wordWrap : wordWrap,
+			multiline : multiline,
+			password : password,
+			readOnly : readOnly,
+			autoSize : autoSize,
+			noSelect : noSelect,
+			border : border,
+			wasStatic : wasStatic,
+			html : html,
+			useOutlines : useOutlines,
+			fontId : fontId,
+			fontClass : fontClass,
+			fontHeight : fontHeight,
+			textColor : textColor,
+			maxLength : maxLength,
+			align : align,
+			leftMargin : leftMargin,
+			rightMargin : rightMargin,
+			indent : indent,
+			leading : leading,
+			variableName : variableName,
+			initialText : initialText,
+		};
+	}
+	
 	function readLanguage() {
 		return switch(i.readByte()) {
 			case 0: LangCode.LCNone;
@@ -1407,6 +1469,8 @@ class Reader {
 			TDefineText(readDefineText(false));
 		case TagId.DefineText2:
 			TDefineText2(readDefineText(true));
+		case TagId.DefineEditText:
+			TDefineEditText(readDefineEditText());
 		default:
 			var data = i.read(len);
 			TUnknown(id,data);

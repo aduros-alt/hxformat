@@ -387,6 +387,65 @@ class Writer {
 		};
 	}
 
+	function writeDefineEditText( det : DefineEditText ) {
+		o.writeUInt16(det.cid);
+		writeRect(det.bounds);
+		bits.writeBit(det.initialText != null);
+		bits.writeBit(det.wordWrap);
+		bits.writeBit(det.multiline);
+		bits.writeBit(det.password);
+		bits.writeBit(det.readOnly);
+		bits.writeBit(det.textColor != null);
+		bits.writeBit(det.maxLength != null);
+		bits.writeBit(det.fontId != null);
+		bits.writeBit(det.fontClass != null);
+		bits.writeBit(det.autoSize);
+		bits.writeBit(det.align != null);
+		bits.writeBit(det.noSelect);
+		bits.writeBit(det.border);
+		bits.writeBit(det.wasStatic);
+		bits.writeBit(det.html);
+		bits.writeBit(det.useOutlines);
+		bits.flush();
+		if (det.fontId != null) {
+			o.writeUInt16(det.fontId);
+		}
+		if (det.fontClass != null) {
+			o.writeString(det.fontClass);
+			o.writeByte(0);
+		}
+		if (det.fontHeight != null) {
+			o.writeUInt16(det.fontHeight);
+		}
+		if (det.textColor != null) {
+			writeRGBA(det.textColor);
+		}
+		if (det.maxLength != null) {
+			o.writeUInt16(det.maxLength);
+		}
+		if (det.align != null) {
+			o.writeByte(Type.enumIndex(det.align));
+		}
+		if (det.leftMargin != null) {
+			o.writeUInt16(det.leftMargin);
+		}
+		if (det.rightMargin != null) {
+			o.writeUInt16(det.rightMargin);
+		}
+		if (det.indent != null) {
+			o.writeUInt16(det.indent);
+		}
+		if (det.leading != null) {
+			o.writeInt16(det.leading);
+		}
+		o.writeString(det.variableName);
+		o.writeByte(0);
+		if (det.initialText != null) {
+			o.writeString(det.initialText);
+			o.writeByte(0);
+		}
+	}
+	
 	function writeGradRecord(ver: Int, grad_record: GradRecord) {
 		switch(grad_record) {
 			case GRRGB(pos, col):
@@ -1467,6 +1526,13 @@ class Writer {
 			writeDefineText(dt, true);
 			var bytes = closeTMP(t);
 			writeTID(TagId.DefineText2, bytes.length);
+			o.write(bytes);
+
+		case TDefineEditText(det):
+			var t = openTMP();
+			writeDefineEditText(det);
+			var bytes = closeTMP(t);
+			writeTID(TagId.DefineEditText, bytes.length);
 			o.write(bytes);
 
 		}
