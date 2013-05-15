@@ -33,11 +33,11 @@ class Builtins {
 	public static inline var CINVALID = -1000;
 	
 	var vm : VM;
-	public var table : Hash<Value>;
+	public var table : Map<String,Value>;
 	
 	public function new(vm) {
 		this.vm = vm;
-		table = new Hash();
+		table = new Map();
 		b("objsetproto", VFun2(objsetproto));
 		b("typeof", VFun1(typeof));
 		b("string", VFun1(string));
@@ -148,7 +148,7 @@ class Builtins {
 		case VString(s): s;
 		case VFunction(f): "#function:" + _nargs(f);
 		case VAbstract(_): "#abstract";
-		case VObject(o):
+		case VObject(_):
 			throw "TODO";
 		case VProxy(o):
 			Std.string(o);

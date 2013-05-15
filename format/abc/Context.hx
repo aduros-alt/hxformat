@@ -50,7 +50,7 @@ private class NullOutput extends haxe.io.Output {
 class Context {
 
 	var data : ABCData;
-	var hstrings : Hash<Int>;
+	var hstrings : Map<String,Int>;
 	var curClass : ClassDef;
 	var curFunction : { f : Function, ops : Array<OpCode> };
 	var classes : Array<Field>;
@@ -67,7 +67,7 @@ class Context {
 	public function new() {
 		bytepos = new NullOutput();
 		opw = new OpWriter(bytepos);
-		hstrings = new Hash();
+		hstrings = new Map();
 		data = new ABCData();
 		data.ints = new Array();
 		data.uints = new Array();
@@ -173,7 +173,7 @@ class Context {
 		return Idx(arr.length);
 	}
 
-	function elookup<T>( arr : Array<T>, n : T ) : Index<T> {
+	function elookup<T:EnumValue>( arr : Array<T>, n : T ) : Index<T> {
 		for( i in 0...arr.length )
 			if( Type.enumEq(arr[i],n) )
 				return Idx(i + 1);
