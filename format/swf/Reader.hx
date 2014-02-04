@@ -987,6 +987,68 @@ class Reader {
 		});
 	}
 
+	static var ALIGN_ENUMS(default, never) = Type.allEnums(DefineEditTextAlign);
+	
+	function readDefineEditText() {
+		var cid = i.readUInt16();
+		var bounds = readRect();
+		bits.reset();
+		var hasText = bits.readBit();
+		var wordWrap = bits.readBit();
+		var multiline = bits.readBit();
+		var password = bits.readBit();
+		var readOnly = bits.readBit();
+		var hasTextColor = bits.readBit();
+		var hasMaxLength = bits.readBit();
+		var hasFont = bits.readBit();
+		var hasFontClass = bits.readBit();
+		var autoSize = bits.readBit();
+		var hasLayout = bits.readBit();
+		var noSelect = bits.readBit();
+		var border = bits.readBit();
+		var wasStatic = bits.readBit();
+		var html = bits.readBit();
+		var useOutlines = bits.readBit();
+		var fontId = hasFont ? i.readUInt16() : null;
+		var fontClass = hasFontClass ? readUTF8Bytes().toString() : null;
+		var fontHeight = hasFont ? i.readUInt16() : null;
+		var textColor = hasTextColor ? readRGBA() : null;
+		var maxLength = hasMaxLength ? i.readUInt16() : null;
+		var align = hasLayout ? ALIGN_ENUMS[i.readByte()] : null;
+		var leftMargin = hasLayout ? i.readUInt16() : null;
+		var rightMargin = hasLayout ? i.readUInt16() : null;
+		var indent = hasLayout ? i.readUInt16() : null;
+		var leading = hasLayout ? i.readInt16() : null;
+		var variableName = readUTF8Bytes().toString();
+		var initialText = hasText ? readUTF8Bytes().toString() : null;
+		return {
+			cid : cid,
+			bounds : bounds,
+			wordWrap : wordWrap,
+			multiline : multiline,
+			password : password,
+			readOnly : readOnly,
+			autoSize : autoSize,
+			noSelect : noSelect,
+			border : border,
+			wasStatic : wasStatic,
+			html : html,
+			useOutlines : useOutlines,
+			fontId : fontId,
+			fontClass : fontClass,
+			fontHeight : fontHeight,
+			textColor : textColor,
+			maxLength : maxLength,
+			align : align,
+			leftMargin : leftMargin,
+			rightMargin : rightMargin,
+			indent : indent,
+			leading : leading,
+			variableName : variableName,
+			initialText : initialText,
+		};
+	}
+	
 	function readLanguage() {
 		return switch(i.readByte()) {
 			case 0: LangCode.LCNone;
@@ -1212,6 +1274,66 @@ class Reader {
 		});
 	}
 
+	function readTextRecord(glyphBits, advanceBits, v2) {
+		bits.reset();
+		if (bits.readBit()) {
+			bits.readBits(3); // Must 0;
+			var hasFont = bits.readBit();
+			var hasColor = bits.readBit();
+			var hasYOffset = bits.readBit();
+			var hasXOffset = bits.readBit();
+			var fontId = hasFont ? i.readUInt16() : null;
+			var textColor = hasColor ? v2 ? readFixed() : #if haxe3 i.readUInt24() #else haxe.Int32.ofInt(i.readUInt24()) #end : null;
+			var xOffset = hasXOffset ? i.readInt16() : null;
+			var yOffset = hasYOffset ? i.readInt16() : null;
+			var textHeight = hasFont ? i.readUInt16() : null;
+			var glyphCount = i.readByte();
+			var glyphEntries = [
+				for ( i in 0...glyphCount ) {
+					var glyphIndex = bits.readBits(glyphBits);
+					var glyphAdvance = bits.readBits(advanceBits);
+					{
+						glyphIndex : glyphIndex,
+						glyphAdvance : glyphAdvance,
+					}
+				}
+			];
+			return {
+				fontId : fontId,
+				textColor : textColor,
+				xOffset : xOffset,
+				yOffset : yOffset,
+				textHeight : textHeight,
+				glyphEntries : glyphEntries,
+			};
+		} else {
+			return null;
+		}
+	}
+	
+	function readDefineText( v2 : Bool ) {
+		var cid = i.readUInt16();
+		var textBounds = readRect();
+		var textMatrix = readMatrix();
+		var glyphBits = i.readByte();
+		var advanceBits = i.readByte();
+		var textRecords = [];
+		var textRecord = readTextRecord(glyphBits, advanceBits, v2);
+		while (textRecord != null)
+		{
+			textRecords.push(textRecord);
+			textRecord = readTextRecord(glyphBits, advanceBits, v2);
+		}
+		return {
+			cid : cid,
+			textBounds : textBounds,
+			textMatrix : textMatrix,
+			glyphBits : glyphBits,
+			advanceBits : advanceBits,
+			textRecords : textRecords,
+		}
+	}
+	
 	public function readTag() : SWFTag {
 		var h = i.readUInt16();
 		var id = h >> 6;
@@ -1343,6 +1465,12 @@ class Reader {
 			TBinaryData(id, i.read(len - 6));
 		case TagId.DefineSound:
 			readSound(len);
+		case TagId.DefineText:
+			TDefineText(readDefineText(false));
+		case TagId.DefineText2:
+			TDefineText2(readDefineText(true));
+		case TagId.DefineEditText:
+			TDefineEditText(readDefineEditText());
 		default:
 			var data = i.read(len);
 			TUnknown(id,data);
